@@ -434,6 +434,12 @@ def draw_game_over():
     screen.blit(font.render(f'{winner} won the game!', True, 'white'), (210, 210))
     screen.blit(font.render(f'Press ENTER to Restart!', True, 'white'), (210, 240))
 
+def has_legal_moves(options):
+    for moves in options:
+        if moves:
+            return True
+    return False
+
 # main game loop
 black_options = check_options(black_pieces, black_locations, 'black')
 white_options = check_options(white_pieces, white_locations, 'white')
@@ -461,68 +467,71 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not game_over:
-            x_coord = event.pos[0] // 80
-            y_coord = event.pos[1] // 80
-            click_coords = (x_coord, y_coord)
-            if turn_step <= 1:
-                if click_coords == (8, 8) or click_coords == (9, 8) or click_coords == (8, 9) or click_coords == (9, 9) \
-                    or click_coords == (8, 10) or click_coords == (9, 10) or click_coords == (10, 9) or click_coords == (10, 8):
-                    winner = 'black'
-                if click_coords in white_locations:
-                    selection = white_locations.index(click_coords)
-                    if turn_step == 0:
-                        turn_step = 1
-                if click_coords in valid_moves and selection != 80:
-                    white_ep = check_ep(white_locations[selection], click_coords)
-                    white_locations[selection] = click_coords
-                    if click_coords in black_locations:
-                        black_piece = black_locations.index(click_coords)
-                        captured_pieces_white.append(black_pieces[black_piece])
-                        if len(captured_pieces_white) == 16:
-                            winner = 'white'
-                        black_pieces.pop(black_piece)
-                        black_locations.pop(black_piece)
-                    if click_coords == black_ep:
-                        black_piece = black_locations.index((black_ep[0], black_ep[1] - 1))
-                        captured_pieces_white.append(black_pieces[black_piece])
-                        black_pieces.pop(black_piece)
-                        black_locations.pop(black_piece)
-                        # black_moved.pop(black_piece)
-                    black_options = check_options(black_pieces, black_locations, 'black')
-                    white_options = check_options(white_pieces, white_locations, 'white')
-                    turn_step = (turn_step + 1) % 4  # Alternar entre turnos
-                    selection = 80
-                    valid_moves = []
-            if turn_step > 1:
-                if click_coords == (8, 8) or click_coords == (9, 8) or click_coords == (8, 9) or click_coords == (9, 9) \
-                    or click_coords == (8, 10) or click_coords == (9, 10) or click_coords == (10, 9) or click_coords == (10, 8):
-                    winner = 'white'
-                if click_coords in black_locations:
-                    selection = black_locations.index(click_coords)
-                    if turn_step == 2:
-                        turn_step = 3
-                if click_coords in valid_moves and selection != 80:
-                    black_ep = check_ep(black_locations[selection], click_coords)
-                    black_locations[selection] = click_coords
+        if not (white_promote or black_promote):
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not game_over:
+                x_coord = event.pos[0] // 80
+                y_coord = event.pos[1] // 80
+                click_coords = (x_coord, y_coord)
+                if turn_step <= 1:
+                    if click_coords == (8, 8) or click_coords == (9, 8) or click_coords == (8, 9) or click_coords == (9, 9) \
+                        or click_coords == (8, 10) or click_coords == (9, 10) or click_coords == (10, 9) or click_coords == (10, 8):
+                        winner = 'black'
                     if click_coords in white_locations:
-                        white_piece = white_locations.index(click_coords)
-                        captured_pieces_black.append(white_pieces[white_piece])
-                        if len(captured_pieces_black) == 16:
+                        selection = white_locations.index(click_coords)
+                        if turn_step == 0:
+                            turn_step = 1
+                    if click_coords in valid_moves and selection != 80:
+                        white_ep = check_ep(white_locations[selection], click_coords)
+                        white_locations[selection] = click_coords
+                        if click_coords in black_locations:
+                            black_piece = black_locations.index(click_coords)
+                            captured_pieces_white.append(black_pieces[black_piece])
+                            if len(captured_pieces_white) == 16:
+                                winner = 'white'
+                            black_pieces.pop(black_piece)
+                            black_locations.pop(black_piece)
+                        if click_coords == black_ep:
+                            black_piece = black_locations.index((black_ep[0], black_ep[1] - 1))
+                            captured_pieces_white.append(black_pieces[black_piece])
+                            black_pieces.pop(black_piece)
+                            black_locations.pop(black_piece)
+                        black_options = check_options(black_pieces, black_locations, 'black')
+                        white_options = check_options(white_pieces, white_locations, 'white')
+                        if not has_legal_moves(black_options):
                             winner = 'black'
-                        white_pieces.pop(white_piece)
-                        white_locations.pop(white_piece)
-                    if click_coords == white_ep:
-                        white_piece = white_locations.index((white_ep[0], white_ep[1] + 1))
-                        captured_pieces_black.append(white_pieces[white_piece])
-                        white_pieces.pop(white_piece)
-                        white_locations.pop(white_piece)
-                        # white_moved.pop(white_piece)
-                    black_options = check_options(black_pieces, black_locations, 'black')
-                    white_options = check_options(white_pieces, white_locations, 'white')
-                    turn_step = 0
-                    selection = 80
-                    valid_moves = []
+                        turn_step = (turn_step + 1) % 4  # Alternar entre turnos
+                        selection = 80
+                        valid_moves = []
+                if turn_step > 1:
+                    if click_coords == (8, 8) or click_coords == (9, 8) or click_coords == (8, 9) or click_coords == (9, 9) \
+                        or click_coords == (8, 10) or click_coords == (9, 10) or click_coords == (10, 9) or click_coords == (10, 8):
+                        winner = 'white'
+                    if click_coords in black_locations:
+                        selection = black_locations.index(click_coords)
+                        if turn_step == 2:
+                            turn_step = 3
+                    if click_coords in valid_moves and selection != 80:
+                        black_ep = check_ep(black_locations[selection], click_coords)
+                        black_locations[selection] = click_coords
+                        if click_coords in white_locations:
+                            white_piece = white_locations.index(click_coords)
+                            captured_pieces_black.append(white_pieces[white_piece])
+                            if len(captured_pieces_black) == 16:
+                                winner = 'black'
+                            white_pieces.pop(white_piece)
+                            white_locations.pop(white_piece)
+                        if click_coords == white_ep:
+                            white_piece = white_locations.index((white_ep[0], white_ep[1] + 1))
+                            captured_pieces_black.append(white_pieces[white_piece])
+                            white_pieces.pop(white_piece)
+                            white_locations.pop(white_piece)
+                        black_options = check_options(black_pieces, black_locations, 'black')
+                        white_options = check_options(white_pieces, white_locations, 'white')
+                        if not has_legal_moves(white_options):
+                            winner = 'white' 
+                        turn_step = 0
+                        selection = 80
+                        valid_moves = []
         if event.type == pygame.KEYDOWN and game_over:
             if event.key == pygame.K_RETURN:
                 game_over = False
