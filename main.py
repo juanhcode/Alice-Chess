@@ -1,5 +1,6 @@
 import pygame
 from constantes import *
+import random
 
 pygame.init()
 
@@ -439,6 +440,66 @@ def has_legal_moves(options):
         if moves:
             return True
     return False
+def minimax(position, depth, alpha, beta, maximizing_player):
+    if depth == 0 or game_over:
+        return evaluate_board(position)
+
+    if maximizing_player:
+        max_eval = float('-inf')
+        for move in get_all_moves(position, 'black'):
+            eval = minimax(move, depth - 1, alpha, beta, False)
+            max_eval = max(max_eval, eval)
+            alpha = max(alpha, eval)
+            if beta <= alpha:
+                break
+        return max_eval
+    else:
+        min_eval = float('inf')
+        for move in get_all_moves(position, 'white'):
+            eval = minimax(move, depth - 1, alpha, beta, True)
+            min_eval = min(min_eval, eval)
+            beta = min(beta, eval)
+            if beta <= alpha:
+                break
+        return min_eval
+
+def evaluate_board(position):
+    # Simple heuristic: material count
+    piece_values = {
+        'pawn': 1,
+        'knight': 3,
+        'bishop': 3,
+        'rook': 5,
+        'queen': 9,
+        'king': 2
+    }
+    white_score = sum(piece_values[piece] for piece in position['white_pieces'])
+    black_score = sum(piece_values[piece] for piece in position['black_pieces'])
+    return black_score - white_score
+
+def get_all_moves(position, color):
+    if color == 'white':
+        pieces = position['white_pieces']
+        locations = position['white_locations']
+        options = check_options(pieces, locations, 'white')
+    else:
+        pieces = position['black_pieces']
+        locations = position['black_locations']
+        options = check_options(pieces, locations, 'black')
+
+    all_moves = []
+    for i in range(len(pieces)):
+        for move in options[i]:
+            new_position = {
+                'white_pieces': position['white_pieces'].copy(),
+                'white_locations': position['white_locations'].copy(),
+                'black_pieces': position['black_pieces'].copy(),
+                'black_locations': position['black_locations'].copy()
+            }
+            new_position[color + '_locations'][i] = move
+            all_moves.append(new_position)
+    return all_moves
+
 
 # main game loop
 black_options = check_options(black_pieces, black_locations, 'black')
@@ -446,10 +507,6 @@ white_options = check_options(white_pieces, white_locations, 'white')
 run = True
 while run:
     timer.tick(fps)
-    # if counter < 30:
-    #     counter += 1
-    # else:
-    #     counter = 0
     screen.fill('dark gray')
     draw_board()
     draw_board2()
@@ -502,59 +559,73 @@ while run:
                         turn_step = (turn_step + 1) % 4  # Alternar entre turnos
                         selection = 80
                         valid_moves = []
-                if turn_step > 1:
-                    if click_coords == (8, 8) or click_coords == (9, 8) or click_coords == (8, 9) or click_coords == (9, 9) \
-                        or click_coords == (8, 10) or click_coords == (9, 10) or click_coords == (10, 9) or click_coords == (10, 8):
-                        winner = 'white'
-                    if click_coords in black_locations:
-                        selection = black_locations.index(click_coords)
-                        if turn_step == 2:
-                            turn_step = 3
-                    if click_coords in valid_moves and selection != 80:
-                        black_ep = check_ep(black_locations[selection], click_coords)
-                        black_locations[selection] = click_coords
-                        if click_coords in white_locations:
-                            white_piece = white_locations.index(click_coords)
-                            captured_pieces_black.append(white_pieces[white_piece])
-                            if len(captured_pieces_black) == 16:
-                                winner = 'black'
-                            white_pieces.pop(white_piece)
-                            white_locations.pop(white_piece)
-                        if click_coords == white_ep:
-                            white_piece = white_locations.index((white_ep[0], white_ep[1] + 1))
-                            captured_pieces_black.append(white_pieces[white_piece])
-                            white_pieces.pop(white_piece)
-                            white_locations.pop(white_piece)
-                        black_options = check_options(black_pieces, black_locations, 'black')
-                        white_options = check_options(white_pieces, white_locations, 'white')
-                        if not has_legal_moves(white_options):
-                            winner = 'white' 
-                        turn_step = 0
-                        selection = 80
-                        valid_moves = []
-        if event.type == pygame.KEYDOWN and game_over:
-            if event.key == pygame.K_RETURN:
-                game_over = False
-                winner = ''
-                white_pieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook',
-                                'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
-                white_locations = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0),
-                                   (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)]
-                black_pieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook',
-                                'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
-                black_locations = [(0, 7), (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7),
-                                   (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
-                captured_pieces_white = []
-                captured_pieces_black = []
-                turn_step = 0
-                selection = 80
-                valid_moves = []
-                black_options = check_options(black_pieces, black_locations, 'black')
-                white_options = check_options(white_pieces, white_locations, 'white')
+
+    if turn_step > 1 and not game_over:
+        best_move = None
+        best_value = float('-inf')
+        for i, moves in enumerate(black_options):
+            for move in moves:
+                new_position = {
+                    'white_pieces': white_pieces.copy(),
+                    'white_locations': white_locations.copy(),
+                    'black_pieces': black_pieces.copy(),
+                    'black_locations': black_locations.copy()
+                }
+                new_position['black_locations'][i] = move
+                move_value = minimax(new_position, 4, float('-inf'), float('inf'), False)
+                if move_value > best_value:
+                    best_value = move_value
+                    best_move = (i, move)
+
+        if best_move:
+            piece_index, move = best_move
+            black_ep = check_ep(black_locations[piece_index], move)
+            black_locations[piece_index] = move
+            if move in white_locations:
+                white_piece = white_locations.index(move)
+                captured_pieces_black.append(white_pieces[white_piece])
+                if len(captured_pieces_black) == 16:
+                    winner = 'black'
+                white_pieces.pop(white_piece)
+                white_locations.pop(white_piece)
+            if move == white_ep:
+                white_piece = white_locations.index((white_ep[0], white_ep[1] + 1))
+                captured_pieces_black.append(white_pieces[white_piece])
+                white_pieces.pop(white_piece)
+                white_locations.pop(white_piece)
+            black_options = check_options(black_pieces, black_locations, 'black')
+            white_options = check_options(white_pieces, white_locations, 'white')
+            if not has_legal_moves(white_options):
+                winner = 'white'
+            turn_step = 0
+            selection = 80
+            valid_moves = []
+
+
+    if event.type == pygame.KEYDOWN and game_over:
+        if event.key == pygame.K_RETURN:
+            game_over = False
+            winner = ''
+            white_pieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook',
+                            'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
+            white_locations = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0),
+                               (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)]
+            black_pieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook',
+                            'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
+            black_locations = [(0, 7), (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7),
+                               (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
+            captured_pieces_white = []
+            captured_pieces_black = []
+            turn_step = 0
+            selection = 80
+            valid_moves = []
+            black_options = check_options(black_pieces, black_locations, 'black')
+            white_options = check_options(white_pieces, white_locations, 'white')
 
     if winner != '':
         game_over = True
         draw_game_over()
 
     pygame.display.flip()
+
 pygame.quit()
