@@ -3,7 +3,7 @@ import pygame
 pygame.init()
 
 #Ancho para una pantalla de 14 pulgadas
-WIDTH = 1500
+WIDTH = 1440
 #Alto para una pantalla de 14 pulgadas
 HEIGHT = 800
 
@@ -12,7 +12,7 @@ fresanbold = 'freesansbold.ttf'
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
 pygame.display.set_caption('Two-Player Pygame Chess!')
 font = pygame.font.Font(fresanbold, 20)
-medium_font = pygame.font.Font(fresanbold, 28)
+medium_font = pygame.font.Font(fresanbold, 23)
 big_font = pygame.font.Font(fresanbold, 40)
 timer = pygame.time.Clock()
 fps = 60
@@ -20,15 +20,13 @@ fps = 60
 white_pieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook',
                 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
 white_locations = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0),
-                   (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)]
-white_locations2 = [(10.75, 0), (11.75, 0), (12.75, 0), (13.75, 0), (14.75, 0), (15.75, 0), (16.75, 0), (17.75, 0),
-                     (10.75, 1), (11.75, 1), (12.75, 1), (13.75, 1), (14.75, 1), (15.75, 1), (16.75, 1), (17.75, 1)]
+                    (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)]
 black_pieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook',
                 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn', 'pawn']
 black_locations = [(0, 7), (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7),
-                   (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
-black_locations2 = [(10.75, 7), (11.75, 7), (12.75, 7), (13.75, 7), (14.75, 7), (15.75, 7), (16.75, 7), (17.75, 7),
-                    (10.75, 6), (11.75, 6), (12.75, 6), (13.75, 6), (14.75, 6), (15.75, 6), (16.75, 6), (17.75, 6)]
+                    (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
+board1_locations = white_locations.copy(), black_locations.copy()
+board2_locations = [], []
 captured_pieces_white = []
 captured_pieces_black = []
 # 0 - whites turn no selection: 1-whites turn piece selected: 2- black turn no selection, 3 - black turn piece selected
