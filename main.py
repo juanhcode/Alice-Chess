@@ -182,7 +182,8 @@ def check_bishop(position, color):
                 if (position[0] + (chain * x), position[1] + (chain * y)) not in friends_list[0] and \
                     (position[0]+10 + (chain * x), position[1] + (chain * y)) not in friends_list[1] and \
                     x_limit_start <= position[0] + (chain * x) <= x_limit_end and 0 <= position[1] + (chain * y) <= 7:
-                    moves_list.append((position[0] + (chain * x), position[1] + (chain * y)))
+                    if (position[0]+10 + (chain * x), position[1] + (chain * y)) not in enemies_list[1]:
+                        moves_list.append((position[0] + (chain * x), position[1] + (chain * y)))
                     if (position[0] + (chain * x), position[1] + (chain * y)) in enemies_list[0] or \
                         (position[0]+10 + (chain * x), position[1] + (chain * y)) in enemies_list[1]:
                         path = False
@@ -193,7 +194,8 @@ def check_bishop(position, color):
                 if (position[0] + (chain * x), position[1] + (chain * y)) not in friends_list[1] and \
                     (position[0]-10 + (chain * x), position[1] + (chain * y)) not in friends_list[0] and \
                     x_limit_start <= position[0] + (chain * x) <= x_limit_end and 0 <= position[1] + (chain * y) <= 7:
-                    moves_list.append((position[0] + (chain * x), position[1] + (chain * y)))
+                    if (position[0]-10 + (chain * x), position[1] + (chain * y)) not in enemies_list[0]:
+                        moves_list.append((position[0] + (chain * x), position[1] + (chain * y)))
                     if (position[0] + (chain * x), position[1] + (chain * y)) in enemies_list[1] or \
                         (position[0]-10 + (chain * x), position[1] + (chain * y)) in enemies_list[0]:
                         path = False
@@ -231,9 +233,10 @@ def check_rook(position, color):
         while path:
             if position[0] <= 7:
                 if (position[0] + (chain * x), position[1] + (chain * y)) not in friends_list[0] and \
-                    (position[0]+10 + (chain * x), position[1] + (chain * y)) not in friends_list[1]  and \
+                    (position[0]+10 + (chain * x), position[1] + (chain * y)) not in friends_list[1] and \
                     x_limit_start <= position[0] + (chain * x) <= x_limit_end and 0 <= position[1] + (chain * y) <= 7:
-                    moves_list.append((position[0] + (chain * x), position[1] + (chain * y)))
+                    if (position[0]+10 + (chain * x), position[1] + (chain * y)) not in enemies_list[1]:
+                        moves_list.append((position[0] + (chain * x), position[1] + (chain * y)))
                     if (position[0] + (chain * x), position[1] + (chain * y)) in enemies_list[0] or \
                         (position[0]+10 + (chain * x), position[1] + (chain * y)) in enemies_list[1]:
                         path = False
@@ -244,7 +247,8 @@ def check_rook(position, color):
                 if (position[0] + (chain * x), position[1] + (chain * y)) not in friends_list[1] and \
                     (position[0]-10 + (chain * x), position[1] + (chain * y)) not in friends_list[0] and \
                     x_limit_start <= position[0] + (chain * x) <= x_limit_end and 0 <= position[1] + (chain * y) <= 7:
-                    moves_list.append((position[0] + (chain * x), position[1] + (chain * y)))
+                    if (position[0]-10 + (chain * x), position[1] + (chain * y)) not in enemies_list[0]:
+                        moves_list.append((position[0] + (chain * x), position[1] + (chain * y)))
                     if (position[0] + (chain * x), position[1] + (chain * y)) in enemies_list[1] or \
                         (position[0]-10 + (chain * x), position[1] + (chain * y)) in enemies_list[0]:
                         path = False
@@ -368,18 +372,18 @@ def draw_captured():
         captured_piece = captured_pieces_white[i]
         index = piece_list.index(captured_piece)
         if i < 8:
-            screen.blit(small_black_images[index], (670, 5 + 50 * i))
+            screen.blit(small_black_images[index], (640, 5 + 50 * i))
         else:
-            screen.blit(small_black_images[index], (690, 5 + 50 * (i - 8)))
+            screen.blit(small_black_images[index], (660, 5 + 50 * (i - 8)))
         # If there are more than 8 captured pieces, start a new row
             
     for i in range(len(captured_pieces_black)):
         captured_piece = captured_pieces_black[i]
         index = piece_list.index(captured_piece)
         if i < 8:
-            screen.blit(small_white_images[index], (770, 5 + 50 * i))
+            screen.blit(small_white_images[index], (740, 5 + 50 * i))
         else:
-            screen.blit(small_white_images[index], (790, 5 + 50 * (i - 8)))
+            screen.blit(small_white_images[index], (760, 5 + 50 * (i - 8)))
 
 # Determinar si hay movimientos de captura disponibles
 def get_capture_moves(pieces, locations, opponent_locations, turn):
