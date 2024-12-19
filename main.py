@@ -500,7 +500,6 @@ def has_legal_moves(options):
 
 def switch_board(coords, penultimate_move, color):
 
-    print("penultimate_move: ", penultimate_move)
     if coords[0] < 8:  # If the piece is on board 1
         if coords not in board2_locations[0] and coords not in board2_locations[1]:
             new_coords = (coords[0] + 10, coords[1])
@@ -531,6 +530,65 @@ penultimate_move = None
 black_options = check_options(black_pieces, black_locations, 'black')
 white_options = check_options(white_pieces, white_locations, 'white')
 run = True
+
+def minimax(board, depth, alpha, beta, maximizing_player):
+    if depth == 0 or game_over:
+        return evaluate_board(board)
+
+    if maximizing_player:
+        max_eval = float('-inf')
+        for move in get_all_moves(board, 'black'):
+            eval = minimax(move, depth - 1, alpha, beta, False)
+            max_eval = max(max_eval, eval)
+            alpha = max(alpha, eval)
+            if beta <= alpha:
+                break
+        return max_eval
+    else:
+        min_eval = float('inf')
+        for move in get_all_moves(board, 'white'):
+            eval = minimax(move, depth - 1, alpha, beta, True)
+            min_eval = min(min_eval, eval)
+            beta = min(beta, eval)
+            if beta <= alpha:
+                break
+        return min_eval
+
+
+def evaluate_board(position):
+    piece_values = {
+        'pawn': 1,
+        'knight': 3,
+        'bishop': 3,
+        'rook': 5,
+        'queen': 9,
+        'king': 1000
+    }
+    white_score = sum(piece_values[piece] * position['white_pieces'].count(piece) for piece in piece_values)
+    black_score = sum(piece_values[piece] * position['black_pieces'].count(piece) for piece in piece_values)
+    return white_score - black_score
+
+def get_all_moves(position, color):
+    if color == 'white':
+        pieces = position['white_pieces']
+        locations = position['white_locations']
+    else:
+        pieces = position['black_pieces']
+        locations = position['black_locations']
+
+    all_moves = []
+    for i in range(len(pieces)):
+        for move in check_options([pieces[i]], [locations[i]], color)[0]:  # Obtener opciones de movimiento
+            new_position = {
+                'white_pieces': position['white_pieces'].copy(),
+                'white_locations': position['white_locations'].copy(),
+                'black_pieces': position['black_pieces'].copy(),
+                'black_locations': position['black_locations'].copy()
+            }
+            new_position[color + '_locations'][i] = move  # Actualizar la ubicación de la pieza
+            all_moves.append(new_position)
+    return all_moves
+
 while run:
     timer.tick(fps)
     screen.fill('dark gray')
@@ -607,6 +665,40 @@ while run:
                         turn_step = 0
                         selection = 80
                         valid_moves = []
+        if turn_step > 1 and not game_over:
+            best_move = None
+            best_value = float('-inf')
+            for i, moves in enumerate(black_options):
+                for move in moves:
+                    new_position = {
+                    'white_pieces': white_pieces.copy(),
+                    'white_locations': white_locations.copy(),
+                    'black_pieces': black_pieces.copy(),
+                    'black_locations': black_locations.copy()
+                    }
+                    new_position['black_locations'][i] = move
+                    move_value = minimax(new_position, 3, float('-inf'), float('inf'), False)
+                    if move_value > best_value:
+                        best_value = move_value
+                        best_move = (i, move)
+
+            if best_move:
+                piece_index, move = best_move
+                black_locations[piece_index] = switch_board(move, black_locations[piece_index], 'black')
+            if move in white_locations:
+                white_piece = white_locations.index(move)
+                captured_pieces_black.append(white_pieces[white_piece])
+                if len(captured_pieces_black) == 16:
+                    winner = 'black'
+                    white_pieces.pop(white_piece)
+                    white_locations.pop(white_piece)
+            black_options = check_options(black_pieces, black_locations, 'black')
+            white_options = check_options(white_pieces, white_locations, 'white')
+            if not has_legal_moves(white_options):
+                winner = 'white'
+            turn_step = 0
+            selection = 80
+            valid_moves = []
         if event.type == pygame.KEYDOWN and game_over:
             if event.key == pygame.K_RETURN:
                 game_over = False
